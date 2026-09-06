@@ -4,7 +4,7 @@ import css from "./App.module.css";
 import fetchMovies from "../../services/movieService";
 import toast from "react-hot-toast";
 import type { Movie } from "../../types/movie";
-import { useState } from "react";
+import { useState , useEffect } from "react";
 import Loader from "../Loader/Loader";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 import MovieModal from "../MovieModal/MovieModal";
@@ -38,11 +38,14 @@ function App() {
     placeholderData: keepPreviousData,
   });
 
-  // useEffect(() => {
-  //     if (movies.length === 0 || isError) {
-  //     toast.error("No movies found for your request.");
-  //   }
-  // }, [topic]);
+  useEffect(() => {
+      if (movies.length === 0 && isSuccess) {
+      toast.error("No movies found for your request.");
+    }
+    if (isError) {
+      toast.error("No movies found for your request.");
+    }
+  }, [topic]);
 
   /*ФУНКЦІЯ ІВЕНТ-ЛІСТЕНЕР*/
   const handleOpener = (movie: Movie) => {
@@ -54,14 +57,8 @@ function App() {
 
   console.log(movies);
   /* ЦЕ ФУНКЦІЯ ДЛЯ ЗАПИТА НА СЕРВЕР */
-  const getTopic = async (topic: string) => {
+  const getTopic = (topic: string) => {
     setTopic(topic);
-    if (movies.length === 0 && isSuccess) {
-      toast.error("No movies found for your request.");
-    }
-    if (isError) {
-      toast.error("No movies found for your request.");
-    }
     setCurrentPage(1);
   };
   /*RENDER*/
@@ -83,7 +80,7 @@ function App() {
       )}
       {isLoading && <Loader />}
       {isError && <ErrorMessage />}
-      {movies && <MovieGrid onSelect={handleOpener} movies={movies} />}
+      {movies.length > 0 && <MovieGrid onSelect={handleOpener} movies={movies} />}
       {selectedMovie && (
         <MovieModal onClose={handleClose} movie={selectedMovie} />
       )}
