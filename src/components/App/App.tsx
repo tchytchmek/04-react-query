@@ -42,10 +42,7 @@ function App() {
       if (movies.length === 0 && isSuccess) {
       toast.error("No movies found for your request.");
     }
-    if (isError) {
-      toast.error("No movies found for your request.");
-    }
-  }, [topic]);
+  }, [topic, movies, isSuccess]);
 
   /*ФУНКЦІЯ ІВЕНТ-ЛІСТЕНЕР*/
   const handleOpener = (movie: Movie) => {
