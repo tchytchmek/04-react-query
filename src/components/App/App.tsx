@@ -1,23 +1,30 @@
 import SearchBar from "../SearchBar/SearchBar";
 import MovieGrid from "../MovieGrid/MovieGrid";
-import "./App.module.css";
+import css from "./App.module.css";
 import fetchMovies from "../../services/movieService";
 import toast from "react-hot-toast";
 import type { Movie } from "../../types/movie";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Loader from "../Loader/Loader";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 import MovieModal from "../MovieModal/MovieModal";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import ReactPaginateModule from "react-paginate";
+import type { ReactPaginateProps } from "react-paginate";
+import type { ComponentType } from "react";
+
+type ModuleWithDefault<T> = { default: T };
+
+const ReactPaginate = (
+  ReactPaginateModule as unknown as ModuleWithDefault<
+    ComponentType<ReactPaginateProps>
+  >
+).default;
 
 function App() {
-  /* ЦЕ ХУКИ */
-  // const [movies, setMovies] = useState<Movie[]>([]);
-  // const [isMovieGrid, setIsMovieGrid] = useState(false);
-  // const [isLoading, setIsLoading] = useState(false);
-  // const [isError, setIsError] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [topic, setTopic] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const {
     data: { results: movies = [], total_pages: totalPages = 0 } = {},
@@ -25,9 +32,10 @@ function App() {
     isError,
     isSuccess,
   } = useQuery({
-    queryKey: ["topic", topic],
-    queryFn: () => fetchMovies(topic, 1),
-    enabled: Boolean(topic)
+    queryKey: ["topic", topic, currentPage],
+    queryFn: () => fetchMovies(topic, currentPage),
+    enabled: Boolean(topic),
+    placeholderData: keepPreviousData,
   });
 
   // useEffect(() => {
@@ -35,7 +43,7 @@ function App() {
   //     toast.error("No movies found for your request.");
   //   }
   // }, [topic]);
-  
+
   /*ФУНКЦІЯ ІВЕНТ-ЛІСТЕНЕР*/
   const handleOpener = (movie: Movie) => {
     setSelectedMovie(movie);
@@ -51,14 +59,28 @@ function App() {
     if (movies.length === 0 && isSuccess) {
       toast.error("No movies found for your request.");
     }
-    if(isError){
-       toast.error("No movies found for your request.");
+    if (isError) {
+      toast.error("No movies found for your request.");
     }
+    setCurrentPage(1);
   };
   /*RENDER*/
   return (
     <>
       <SearchBar onSubmit={getTopic} />
+      {totalPages > 1 && (
+        <ReactPaginate
+          pageCount={totalPages}
+          pageRangeDisplayed={5}
+          marginPagesDisplayed={1}
+          onPageChange={({ selected }) => setCurrentPage(selected + 1)}
+          forcePage={currentPage - 1}
+          containerClassName={css.pagination}
+          activeClassName={css.active}
+          nextLabel="→"
+          previousLabel="←"
+        />
+      )}
       {isLoading && <Loader />}
       {isError && <ErrorMessage />}
       {movies && <MovieGrid onSelect={handleOpener} movies={movies} />}
